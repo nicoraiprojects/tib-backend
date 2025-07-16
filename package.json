@@ -1,0 +1,28 @@
+{
+  "name": "mobile-crane-pdf-backend",
+  "version": "1.0.0",
+  "description": "Backend service for generating mobile crane certificates as PDFs using Puppeteer",
+  "main": "index.js",
+  "scripts": {
+    "start": "nodemon index.js",
+    "dev": "nodemon index.js"
+  },
+  "keywords": [],
+  "author": "",
+  "license": "ISC",
+  "dependencies": {
+    "axios": "^1.10.0",
+    "cors": "^2.8.5",
+    "date-fns": "^3.6.0",
+    "dotenv": "^16.6.1",
+    "express": "^4.19.2",
+    "mongodb": "^6.17.0",
+    "mongoose": "^8.16.3",
+    "node-fetch": "^3.3.2",
+    "puppeteer": "^22.9.0",
+    "qrcode": "^1.5.4"
+  },
+  "devDependencies": {
+    "nodemon": "^3.1.10"
+  }
+}

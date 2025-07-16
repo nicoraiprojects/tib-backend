@@ -1,0 +1,250 @@
+<!-- backend/src/templates/mobileCrane.html -->
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <!-- <title>Mobile Crane Certificate</title> -->
+    <!-- Link to the pre-built Tailwind CSS file.
+         The path is relative to the backend's static file serving, e.g., /styles/tailwind.css -->
+    <link href="/styles/mobileCrane.css" rel="stylesheet"> <!-- Assuming you now have mobileCrane.css -->
+    <style>
+        /* All specific print styles that mimic your existing component's `styles` block,
+           but ensure they are standard CSS */
+        @page { size: A4; margin: 2.5cm 1.5cm 0.5cm 1.5cm; } /* Adjusted for footer in Puppeteer options */
+        body {
+            font-family: 'Times New Roman', Times, serif;
+            font-size: 7.5pt; /* Base font size */
+            line-height: 1.1;
+            margin: 0;
+            padding: 0;
+            color: black;
+            -webkit-print-color-adjust: exact;
+            print-color-adjust: exact;
+        }
+        table {
+            border-collapse: collapse;
+            width: 100%;
+            border: 0.5pt solid black;
+        }
+        td, th {
+            padding: 0.5px 1.5px;
+            vertical-align: top;
+            text-align: left;
+            border: 0.5pt solid black;
+            font-size: 9pt; /* Slightly larger for table cells */
+        }
+        /* Specific column adjustments */
+        .craneCertColAdjust > tbody > tr > td:nth-child(1) { width: 3% !important; }
+        .craneCertColAdjust > tbody > tr > td:nth-child(2) { width: 37% !important; }
+        .craneCertColAdjust > tbody > tr > td:nth-child(3) { width: 60% !important; }
+        .craneCertColAdjust td table { width: 100% !important; table-layout: auto !important; }
+
+        /* Other specific styles from your component */
+        /* Adjusted header-table for logo */
+        .header-table { border: 0.5pt solid black; width: 100%; }
+        .header-table td { border: none; text-align: center; padding: 6px !important; font-weight: bold; font-size: 10pt; }
+        .header-table .logo-cell {
+            text-align: left;
+            vertical-align: middle;
+            width: 15%; /* Adjust width as needed */
+            padding: 2px 5px !important;
+        }
+        .header-table .info-cell {
+            text-align: center;
+            vertical-align: middle;
+            width: 85%; /* Adjust width as needed */
+        }
+
+        .main-title { text-align: center; font-weight: bold; font-size: 12pt; text-decoration: underline; margin: 0.2cm 0; }
+        .sub-title { text-align: center; font-size: 9pt; }
+        .item11-table, .item4-table, .item6-table { border: none; }
+        .item11-table td, .item4-table td, .item6-table td { border: none; text-align: left; }
+        .table11-right-border { border-right: 0.5pt solid black !important; }
+        .item11-table .colon { text-align: center; width: 10%; }
+        .item12-table { border: none; border-collapse: collapse; width: 100%; }
+        .item12-table td, .item12-table th { border: 0.5pt solid black; text-align: center; }
+        .item12-table th { font-weight: bold; font-style: italic; background-color: #e5e7eb; }
+        .th-border { border-top: none !important; border-left: none !important; }
+        .body-table-border { border-left: none !important; }
+        .body-table-border-first { border-bottom: none !important; border-left: none !important; }
+        .body-table-border-last { border-bottom: none !important; }
+        .body-table-header { border: none !important; }
+        .table-main-12 { padding: 0px !important; }
+        .table-main-12 table { border: 0px !important; }
+        .last-right-border { border-right: none !important; }
+        .text-center { text-align: center !important; }
+        .p-under-table { text-align: justify; }
+        .italic-p { font-style: italic; }
+        .item11-signature-table { border: 0.5pt dashed grey; width: 100%; margin-top: 0.5cm; }
+        .item11-signature-table td { border: 0.5pt dashed grey; padding: 8px 8px; vertical-align: middle; }
+        .item11-signature-table td:first-child { border-right: none; }
+        .item11-signature-table td:last-child { border-left: none; }
+        .avoid-page-break { /* CSS to discourage page breaks inside this element */
+            page-break-inside: avoid !important;
+            break-inside: avoid-column !important;
+        }
+    </style>
+</head>
+<body>
+    <div id="certificate-content" class="p-1 bg-white border border-black font-['Times_New_Roman'] text-[6.5pt] leading-tight certificate-content-area">
+        <!-- Header Section - Modified to include logo -->
+        <table class="w-full header-table">
+            <tbody>
+                <tr>
+                    <!-- Logo Cell -->
+                    <td class="logo-cell">
+                        <img src="https://fileinfo.com/img/icons/files/256/tib-2240.png" alt="TIB Logo" style="height: 50px; max-width: 100%; display: block; margin: 0 auto;">
+                    </td>
+                    <!-- Info Cells (colSpan 3 for the remaining space) -->
+                    <td class="info-cell">
+                        <table style="width: 100%; border: none;">
+                            <tbody>
+                                <tr>
+                                    <td style="width: 33.3%; border: none; text-align: center; padding: 0 !important;">
+                                        <strong style="font-weight: bold;">TIB JOB No.: {{tib-job-no}}</strong>
+                                    </td>
+                                    <td style="width: 33.3%; border: none; text-align: center; padding: 0 !important;">
+                                        <strong style="font-weight: bold;">TIB CERTIFICATE No.: {{tib-certificate-no}}</strong>
+                                    </td>
+                                    <td style="width: 33.3%; border: none; text-align: center; padding: 0 !important;">
+                                        <strong style="font-weight: bold;">DATE: {{inspection-date-formatted}}</strong>
+                                    </td>
+                                </tr>
+                            </tbody>
+                        </table>
+                    </td>
+                </tr>
+            </tbody>
+        </table>
+
+        <div class="text-center font-bold my-1 main-title">
+            FORM OF RECORD OF TEST & THOROUGH EXAMINATION OF MOBILE CRANE
+        </div>
+        <div class="text-center text-[9pt] mb-1 sub-title">
+            The equipment detailed below was examined in accordance with UAE Federal
+            Ministry Law No. 10 Order 32, Article 20 Issued On 10 01 83, <br />
+            BS EN 7121-2-1,3, ADS 22:2018, OEM Recommendations & Client Inspection
+            Procedures
+        </div><br />
+
+        <!-- Main Details Table -->
+        <table class="w-full border-collapse border main-table border-black craneCertColAdjust">
+            <tbody class="text-[7.5pt]">
+                <tr>
+                    <td class="border border-black p-1 text-center w-[3%]"><strong style="font-weight: bold;">1.</strong></td>
+                    <td class="border border-black p-1 w-[27%]">Name and Address of Owner/Client of Crane</td>
+                    <td class="border border-black p-1 w-[70%]">{{owner-name-address}}</td>
+                </tr>
+                <tr>
+                    <td class="border border-black p-1 text-center w-[3%]"><strong style="font-weight: bold;">2.</strong></td>
+                    <td class="border border-black p-1 w-[27%]">Place of Inspection</td>
+                    <td class="border border-black p-1 w-[70%]">{{inspection-place}}</td>
+                </tr>
+                <tr>
+                    <td class="border border-black p-1 text-center w-[3%]"><strong style="font-weight: bold;">3.</strong></td>
+                    <td class="border border-black p-1 w-[27%]">Name and Address of Manufacturer of Crane</td>
+                    <td class="border border-black p-1 w-[70%]">{{manufacturer-name-address}}</td>
+                </tr>
+                <tr>
+                    <td class="border border-black p-1 text-center w-[3%]"><strong style="font-weight: bold;">4.</strong></td>
+                    <td class="border border-black p-1 w-[27%]">Type of Crane and Nature of Power</td>
+                    <td class="border border-black p-0 w-[70%]">
+                        <table class="w-full item4-table"><tbody>
+                            <tr><td colspan="2">{{crane-type-power}}</td></tr>
+                            <tr><td></td><td>Registration No.: <strong style="font-weight: bold;">{{registration-no}}</strong></td></tr>
+                        </tbody></table>
+                    </td>
+                </tr>
+                <tr>
+                    <td class="border border-black p-1 text-center w-[3%]"><strong style="font-weight: bold;">5.</strong></td>
+                    <td class="border border-black p-1 w-[27%]">Date of Manufacture of Crane</td>
+                    <td class="border border-black p-1 w-[70%]">
+                        <table class="w-full item4-table"><tbody><tr>
+                            <td>{{manufacture-date}}</td>
+                            <td class="text-right">Max. Rated Capacity: <strong style="font-weight: bold;">{{max-rated-capacity}}</strong></td>
+                        </tr></tbody></table>
+                    </td>
+                </tr>
+                <tr>
+                    <td class="border border-black p-1 text-center align-top w-[3%]"><strong style="font-weight: bold;">6.</strong></td>
+                    <td class="border border-black p-1 align-top w-[27%]">Identification Numbers</td>
+                    <td class="border border-black p-0 w-[70%]">
+                        <table class="w-full border-collapse item6-table"><tbody>
+                            <tr><td class="p-1 w-[35%]">a) Makers Serial Number</td><td class="p-1 text-center colon">:</td><td class="p-1 w-[60%]">{{makers-serial-number}}</td></tr>
+                            <tr><td class="p-1 w-[35%]">b) Model Number</td><td class="p-1 text-center colon">:</td><td class="p-1 w-[60%]">{{model-number}}</td></tr>
+                            <tr><td class="p-1 w-[35%]">c) ID Number</td><td class="p-1 text-center colon">:</td><td class="p-1 w-[60%]">{{id-number}}</td></tr>
+                            <tr><td class="p-1 w-[35%]">d) Chassis Number</td><td class="p-1 text-center colon">:</td><td class="p-1 w-[60%]">{{chassis-number}}</td></tr>
+                        </tbody></table>
+                    </td>
+                </tr>
+                <tr><td><strong style="font-weight: bold;">7.</strong></td><td>Make and Type of Derrick Interlock If Required</td><td>{{derrick-interlock}}</td></tr>
+                <tr><td><strong style="font-weight: bold;">8.</strong></td><td>Make and Type of Automatic Safe Load Indicator If Required</td><td>{{load-indicator}}</td></tr>
+                <tr><td><strong style="font-weight: bold;">9.</strong></td><td>Date of Last Proof Load Test of Crane</td><td>{{last-proof-load-test}}</td></tr>
+                <tr><td><strong style="font-weight: bold;">10.</strong></td><td>Date of Previous Examination of Crane</td><td>{{previous-examination-date}}</td></tr>
+
+                <!-- Equipment Description Table -->
+                <tr>
+                    <td class="border border-black p-1 text-center align-top w-[3%]"><strong style="font-weight: bold;">11.</strong></td>
+                    <td class="border border-black p-1 align-top w-[27%]">Description of Equipment (Tested Configuration)</td>
+                    <td class="border table11-main-padding border-black p-0 w-[70%]">
+                        <table class="w-full border-collapse item11-table"><tbody><tr>
+                            <td class="p-0 w-1/2 border-r border-black table11-right-padding" style="border-top:none;border-bottom:none;border-left:none;"><table class="w-full table11-right-border" style="border:none;"><tbody>
+                                <tr><td class="p-1">Boom Length</td><td class="p-1 text-center colon">:</td><td class="p-1">{{boom-length}}</td></tr>
+                                <tr><td class="p-1">Radius (Min / Max.)</td><td class="p-1 text-center colon">:</td><td class="p-1">{{radius-min-max}}</td></tr>
+                                <tr><td class="p-1">Main Wire Rope</td><td class="p-1 text-center colon">:</td><td class="p-1">{{main-wire-rope}}</td></tr>
+                                <tr><td class="p-1">Aux. Wire Rope</td><td class="p-1 text-center colon">:</td><td class="p-1">{{aux-wire-rope}}</td></tr>
+                                <tr><td class="p-1">Outrigger system</td><td class="p-1 text-center colon">:</td><td class="p-1">{{outrigger-system}}</td></tr>
+                            </tbody></table></td>
+                            <td class="p-0 w-1/2 border-l border-black" style="border-top:none;border-bottom:none;border-right:none;"><table class="w-full" style="border:none;"><tbody>
+                                <tr><td class="p-1">Single Line Pull</td><td class="p-1 text-center colon">:</td><td class="p-1">{{single-line-pull}}</td></tr>
+                                <tr><td class="p-1">Counterweight</td><td class="p-1 text-center colon">:</td><td class="p-1">{{counterweight}}</td></tr>
+                                <tr><td class="p-1">Main Hook Block</td><td class="p-1 text-center colon">:</td><td class="p-1">{{main-hook-block}}</td></tr>
+                                <tr><td class="p-1">Aux. Hook Block</td><td class="p-1 text-center colon">:</td><td class="p-1">{{aux-hook-block}}</td></tr>
+                                <tr><td class="p-1">Slewing</td><td class="p-1 text-center colon">:</td><td class="p-1">{{slewing}}</td></tr>
+                            </tbody></table></td>
+                        </tr></tbody></table>
+                    </td>
+                </tr>
+
+                <!-- Test Description Table -->
+                <tr>
+                    <td class="border border-black p-1 text-center align-top w-[3%]"><strong style="font-weight: bold;">12.</strong></td>
+                    <td class="border border-black p-1 align-top w-[27%]">Description of Test and Examination</td>
+                    <td class="border body-table-header table-main-12 p-0 w-[70%]">
+                        <table class="w-full item12-table"><thead><tr>
+                            <th class="p-1 border-r border-b th-border border-black bg-gray-200" style="font-weight:bold;font-style:italic;font-size:7.5pt;"><strong style="font-weight: bold;">(i) <br/> Hoist</strong></th>
+                            <th class="p-1 border-r border-b th-border border-black bg-gray-200" style="font-weight:bold;font-style:italic;font-size:7.5pt;"><strong style="font-weight: bold;">(ii) <br/> Boom Length (m)</strong></th>
+                            <th class="p-1 border-r border-b th-border border-black bg-gray-200" style="font-weight:bold;font-style:italic;font-size:7.5pt;"><strong style="font-weight: bold;">(iii) <br/> Radius (m)</strong></th>
+                            <th class="p-1 border-r border-b th-border border-black bg-gray-200" style="font-weight:bold;font-style:italic;font-size:7.5pt;"><strong style="font-weight: bold;">(iv) <br/> Type of Test/ Load</strong></th>
+                            <th class="p-2 border-r border-b th-border last-right-border border-black bg-gray-200" style="font-weight:bold;font-style:italic;font-size:7.5pt;"><strong style="font-weight: bold;">(v) <br/> SWL (t)</strong></th>
+                        </tr></thead><tbody>
+                            <tr><td class="p-1 border-r border-t border-b body-table-border border-black">Main Hoist</td><td class="p-1 border border-black">{{main-hoist-1-boom-length}}</td><td class="p-1 border border-black">{{main-hoist-1-radius}}</td><td class="p-1 border border-black">{{main-hoist-1-test-type}}</td><td class="p-1 border border-black last-right-border">{{main-hoist-1-swl}}</td></tr>
+                            <tr><td class="p-1 border-r border-t border-b body-table-border border-black">Main Hoist</td><td class="p-1 border border-black">{{main-hoist-2-boom-length}}</td><td class="p-1 border border-black">{{main-hoist-2-radius}}</td><td class="p-1 border border-black">{{main-hoist-2-test-type}}</td><td class="p-1 border border-black last-right-border">{{main-hoist-2-swl}}</td></tr>
+                            <tr><td class="p-1 border-r border-t border-b body-table-border border-black">Main Hoist</td><td class="p-1 border border-black">{{main-hoist-3-boom-length}}</td><td class="p-1 border border-black">{{main-hoist-3-radius}}</td><td class="p-1 border border-black">{{main-hoist-3-test-type}}</td><td class="p-1 border border-black last-right-border">{{main-hoist-3-swl}}</td></tr>
+                            <tr class="body-table-border-last"><td class="p-1 border-r border-t border-b body-table-border-first border-black">Aux Hoist</td><td class="p-1 border body-table-border-last border-black">{{aux-hoist-boom-length}}</td><td class="p-1 border body-table-border-last border-black">{{aux-hoist-radius}}</td><td class="p-1 border body-table-border-last border-black">{{aux-hoist-test-type}}</td><td class="p-1 border body-table-border-last border-black last-right-border">{{aux-hoist-swl}}</td></tr>
+                        </tbody></table>
+                    </td>
+                </tr>
+                <tr><td><strong style="font-weight: bold;">13.</strong></td><td>In the case of a crane with derricking jib(s) the max. radius at which the jib or jibs may be worked</td><td class="text-center">{{derrick-jib-radius}}</td></tr>
+                <tr><td><strong style="font-weight: bold;">14.</strong></td><td>Defects or deficiencies noted & alterations/repairs required before putting the crane into service (if none, enter None)</td><td class="text-center"><p>{{defects-repairs}}</p></td></tr>
+            </tbody>
+        </table>
+        <br />
+        <div class="text-[7.5pt] mt-1 leading-snug p-under-table">
+            {{certification-statement}}
+            <br />
+            <p class="italic italic-p"><strong style="font-weight: bold;">{{operation-limits}}</strong></p><br/>
+        </div>
+        <div class="text-[8pt] mt-1"><strong style="font-weight: bold;">Colour Code:</strong> {{colour-code}}</div>
+        <br /><br />
+        <table class="w-full mt-2 text-[8pt] item11-signature-table avoid-page-break"><tbody>
+            <tr><td colspan="2" class="border border-black p-1"><strong style="font-weight: bold;"><u>Next Inspection Due on:</u> {{next-inspection-due}}</strong></td></tr>
+            <tr><td class="border border-black p-1 w-1/2"><strong style="font-weight: bold;">Inspected by:</strong></td><td class="border border-black p-1 w-1/2 text-right"><strong style="font-weight: bold;">Reviewed by:</strong></td></tr>
+            <tr><td class="border border-black p-1 w-1/2">{{inspector-name}}</td><td class="border border-black p-1 w-1/2 text-right">{{reviewer-name}}</td></tr>
+        </tbody></table>
+        <!-- QR Code HTML will be injected here by the backend -->
+        {{qrCodeHtml}}
+    </div>
+</body>
+</html>
