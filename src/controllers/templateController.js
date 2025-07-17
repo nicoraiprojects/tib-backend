@@ -169,7 +169,7 @@
 // };
 
 const axios = require('axios');
-const Template = require('../model/templateModel');
+const Template = require('../model/templateSecondModal');
 
 /**
  * @desc    Fetches all templates from the database.
