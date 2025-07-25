@@ -172,6 +172,7 @@ const axios = require('axios');
 const Template = require('../model/templateSecondModal');
 const ActiveJobModel = require('../model/activeJobModel');
 const TemplateModel = require('../model/templateSecondModal');
+const JobModal = require('../model/jobsModel'); // Adjust path as needed
 
 /**
  * @desc    Fetches all templates from the database.
@@ -350,9 +351,50 @@ const getTemplateTitles = async (req, res) => {
   }
 };
 
+// const startJob = async (req, res) => {
+//   const { jobId, orderId, templateId } = req.body;
+
+  
+//   if (!jobId || !orderId || !templateId) {
+//     return res.status(400).json({
+//       success: false,
+//       message: 'jobId, orderId, and templateId are required.',
+//     });
+//   }
+
+//   try {
+//     const originalTemplate = await TemplateModel.findOne({ templateId: templateId });
+
+//     if (!originalTemplate) {
+//       return res.status(404).json({ success: false, message: 'Original template not found.' });
+//     }
+
+//     const existingActiveJob = await ActiveJobModel.findOne({ jobId: jobId });
+//     if (existingActiveJob) {
+//       return res.status(200).json(existingActiveJob);
+//     }
+
+//     const newActiveJob = new ActiveJobModel({
+//       jobId: jobId,
+//       orderId: orderId,
+//       originalTemplateId: templateId,
+//       templateData: originalTemplate.toObject(),
+//     });
+
+//     const savedActiveJob = await newActiveJob.save();
+
+//     res.status(201).json(savedActiveJob);
+
+//   } catch (error) {
+//     console.error('Error starting job:', error);
+//     res.status(500).json({ success: false, message: 'Failed to start job.', error: error.message });
+//   }
+// };
+
+
+
 const startJob = async (req, res) => {
   const { jobId, orderId, templateId } = req.body;
-
   
   if (!jobId || !orderId || !templateId) {
     return res.status(400).json({
@@ -362,17 +404,28 @@ const startJob = async (req, res) => {
   }
 
   try {
-    const originalTemplate = await TemplateModel.findOne({ templateId: templateId });
+    // --- Step 1: Find the master Job and the Template ---
+    const [jobToUpdate, originalTemplate] = await Promise.all([
+        JobModal.findOne({ jobId: jobId }),
+        TemplateModel.findOne({ templateId: templateId })
+    ]);
 
+    // --- Step 2: Validate the results ---
+    if (!jobToUpdate) {
+        return res.status(404).json({ success: false, message: `Job with jobId ${jobId} not found.` });
+    }
     if (!originalTemplate) {
-      return res.status(404).json({ success: false, message: 'Original template not found.' });
+        return res.status(404).json({ success: false, message: 'Original template not found.' });
     }
 
+    // --- Step 3: Check if an ActiveJob already exists ---
+    // This prevents re-updating the status if the user re-enters the form
     const existingActiveJob = await ActiveJobModel.findOne({ jobId: jobId });
     if (existingActiveJob) {
       return res.status(200).json(existingActiveJob);
     }
-
+    
+    // --- Step 4: Create the new ActiveJob and update the master Job's status ---
     const newActiveJob = new ActiveJobModel({
       jobId: jobId,
       orderId: orderId,
@@ -380,8 +433,14 @@ const startJob = async (req, res) => {
       templateData: originalTemplate.toObject(),
     });
 
-    const savedActiveJob = await newActiveJob.save();
+    // Run the save and update operations in parallel
+    const [savedActiveJob, _] = await Promise.all([
+        newActiveJob.save(),
+        // ✨ THE KEY CHANGE: Update the 'status' field ✨
+        JobModal.updateOne({ jobId: jobId }, { $set: { status: 'In Progress' } })
+    ]);
 
+    // --- Step 5: Return the ActiveJob data to the client ---
     res.status(201).json(savedActiveJob);
 
   } catch (error) {
@@ -389,7 +448,6 @@ const startJob = async (req, res) => {
     res.status(500).json({ success: false, message: 'Failed to start job.', error: error.message });
   }
 };
-
 /**
  * @desc    Updates the templateData of an active job.
  * @route   PUT /api/jobs/active-job/:jobId

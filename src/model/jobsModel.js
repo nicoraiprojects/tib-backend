@@ -14,9 +14,16 @@ const jobSchema = new mongoose.Schema({
         type: String, 
         required: true 
     },
-    status: { 
+ 
+      status: { 
         type: String, 
         required: true, 
+        // Define all possible states for a job's lifecycle
+        enum: [
+            'Scheduled',     
+            'In Progress', 
+            'Completed', 
+        ],
         default: 'Scheduled' 
     },
     dueDate: { 
@@ -30,6 +37,7 @@ const jobSchema = new mongoose.Schema({
         type: String,
         required: true
     },
+    
      clientLocation: { type: String },
     equipmentDetails: { type: String },
     inspector: { type: String, default: 'Unassigned' },
