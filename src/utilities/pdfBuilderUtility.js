@@ -107,23 +107,8 @@
 //   generateComponentHtml,
 // };
 // ========= NEW HELPER FUNCTION FOR DATA INJECTION =========
-/**
- * Injects dynamic data into a string by replacing {{key}} placeholders.
- * @param {string | null} content The string containing placeholders.
- * @param {object} data The data object with key-value pairs.
- * @returns {string} The content with placeholders replaced by data.
- */
-const injectData = (content, data) => {
-  console.log("Injecting data into content:", content, data);
-  
-  if (!content || !data) return content || '';
-  // Regex to find all instances of {{key}}
-  return content.replace(/{{(.*?)}}/g, (match, key) => {
-    const trimmedKey = key.trim();
-    // Return the value from the data object, or an empty string if not found.
-    return data[trimmedKey] !== undefined ? data[trimmedKey] : '';
-  });
-};
+
+
 
 // --- YOUR EXISTING CODE (UNCHANGED) ---
 const buildComponentStyle = (config) => {
@@ -167,18 +152,12 @@ const getBorderStyle = (borderInfo, tableConfig) => {
   }
   return `${width}px ${style} ${color}`;
 };
-
-// MODIFIED: This function now accepts a 'data' object
 const generateTableHtml = (tableConfig, data) => {
-  let html = `<table style="width: 100%; height: 100%; border-collapse: collapse; font-family: ${
-    tableConfig.fontFamily || "inherit"
-  }; font-size: ${tableConfig.bodyFontSize || 9}px;">`;
+  let html = `<table style="width: 100%; height: 100%; border-collapse: collapse; font-family: ${tableConfig.fontFamily || "inherit"}; font-size: ${tableConfig.bodyFontSize || 9}px;">`;
 
   if (tableConfig.columnWidths?.length > 0) {
     html += "<colgroup>";
-    tableConfig.columnWidths.forEach((width) => {
-      html += `<col style="width: ${width}%;">`;
-    });
+    tableConfig.columnWidths.forEach((width) => { html += `<col style="width: ${width}%;">`; });
     html += "</colgroup>";
   }
 
@@ -187,22 +166,19 @@ const generateTableHtml = (tableConfig, data) => {
     html += "<tr>";
     row.forEach((cell) => {
       if (cell.hidden) return;
-      const attributes = [
-        cell.colspan > 1 ? `colspan="${cell.colspan}"` : "",
-        cell.rowspan > 1 ? `rowspan="${cell.rowspan}"` : "",
-      ].join(" ");
+      const attributes = [ cell.colspan > 1 ? `colspan="${cell.colspan}"` : "", cell.rowspan > 1 ? `rowspan="${cell.rowspan}"` : "" ].join(" ");
       const cellPadding = cell.nestedTable ? 0 : tableConfig.cellPadding || 0;
       let alignment = tableConfig.bodyAlignment || "left";
-      if (tableConfig.hasHeader && rowIndex === 0) {
-        alignment = tableConfig.headerAlignment || "center";
-      }
+      if (tableConfig.hasHeader && rowIndex === 0) { alignment = tableConfig.headerAlignment || "center"; }
       const cellStyle = `padding: ${cellPadding}px; vertical-align: top; text-align: ${alignment}; border-top: ${getBorderStyle(cell.borders.top, tableConfig)}; border-right: ${getBorderStyle(cell.borders.right, tableConfig)}; border-bottom: ${getBorderStyle(cell.borders.bottom, tableConfig)}; border-left: ${getBorderStyle(cell.borders.left, tableConfig)};`;
       
-      // MODIFIED: Inject data into the cell content
-      let cellContent = injectData(cell.content, data);
+      // ========= NEW ID-BASED DATA INJECTION LOGIC =========
+      // Check if the dynamic data object has a key matching this cell's ID.
+      const dynamicContent = data[cell.id];
+      // Use the dynamic content if it exists (even if it's an empty string), otherwise use the template's original content.
+      let cellContent = (dynamicContent !== undefined) ? dynamicContent : (cell.content || "");
       
       if (cell.nestedTable) {
-        // Pass the data down to the nested table renderer
         cellContent += generateTableHtml(cell.nestedTable, data);
       }
       html += `<td ${attributes} style="${cellStyle.trim()}">${cellContent}</td>`;
@@ -213,19 +189,19 @@ const generateTableHtml = (tableConfig, data) => {
   return html;
 };
 
-// MODIFIED: This function now accepts a 'data' object
+// MODIFIED: This function now accepts the ID-based data map
 const generateComponentHtml = (component, data) => {
   const containerStyle = buildComponentStyle(component.config);
   let innerHtml = "";
 
   switch (component.type) {
     case "TextBlock":
-      // MODIFIED: Inject data into the TextBlock content
-      const injectedContent = injectData(component.config.content, data);
-      innerHtml = `<div style="${buildTextBlockStyle(component.config)}">${injectedContent}</div>`;
+      // ========= NEW ID-BASED DATA INJECTION LOGIC =========
+      const dynamicContent = data[component.id];
+      const finalContent = (dynamicContent !== undefined) ? dynamicContent : (component.config.content || "");
+      innerHtml = `<div style="${buildTextBlockStyle(component.config)}">${finalContent}</div>`;
       break;
     case "Table":
-      // MODIFIED: Pass the data object down to the table renderer
       innerHtml = generateTableHtml(component.config, data);
       break;
     default:

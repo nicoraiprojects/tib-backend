@@ -208,6 +208,93 @@
 
 // module.exports = { pdf_generator };
 
+
+//
+
+
+
+
+// const puppeteer = require("puppeteer");
+// const TemplateModel = require("../model/templateModel");
+// const { generateComponentHtml } = require("../utilities/pdfBuilderUtility");
+
+// const pdf_generator = async (req, res) => {
+//   let browser;
+//   try {
+//     const templateId = req.params.id;
+//     const dynamicData = req.body.data || {};
+    
+//     const templateData = await TemplateModel.findOne({ templateId });
+//     if (!templateData) {
+//       return res.status(404).json({ success: false, message: "Template not found" });
+//     }
+
+//     const globalStyles = templateData.globalStyles || {};
+//     const margins = globalStyles.margins || { top: 20, right: 15, bottom: 15, left: 15 };
+    
+//     let allPagesHtml = "";
+//     templateData.pages.forEach((pageData) => {
+//       let pageComponentsHtml = "";
+//       pageData.components.forEach((component) => {
+//         pageComponentsHtml += generateComponentHtml(component, dynamicData);
+//       });
+//       // The page-container has padding to create the visual margin inside the page
+//       const pageContainerStyle = `position: relative; width: 210mm; height: 297mm; box-sizing: border-box; padding: ${margins.top}px ${margins.right}px ${margins.bottom}px ${margins.left}px; page-break-after: always;`;
+//       allPagesHtml += `<div class="page-container" style="${pageContainerStyle.trim()}">${pageComponentsHtml}</div>`;
+//     });
+
+//     // We add a base font-size to the body. This is CRITICAL. It ensures that the text renders at a scale
+//     // that fits within the fixed heights defined in your JSON, preventing overflow to a second page.
+//     const mainContent = `
+//         <style>
+//             body { 
+//                 margin: 0; 
+//                 padding: 0; 
+//                 font-family: ${globalStyles.fontFamily || "Arial, sans-serif"}; 
+//                 font-size: 7.5pt;
+//             } 
+//             .page-container:last-child { page-break-after: avoid; } 
+//             td p { margin: 0; } 
+//         </style>
+//         ${allPagesHtml}
+//     `;
+
+//     browser = await puppeteer.launch({ headless: "new", args: ["--no-sandbox", "--disable-setuid-sandbox"] });
+//     const page = await browser.newPage();
+    
+//     // Your requested header and footer templates
+//     const headerHtml = `<div style="width: 100%; font-size: 10px; padding: 15px 40px 0 40px; color: #757575; display: flex; justify-content: space-between; align-items: center; box-sizing: border-box;"><img src="https://fileinfo.com/img/icons/files/256/tib-2240.png" style="height: 30px;" /><img src="https://fileinfo.com/img/icons/files/256/tib-2240.png" style="height: 30px;" /></div>`;
+//     const footerHtml = `<div style="font-size: 6pt; color: #718096; font-family: Arial, sans-serif; width: 100%; text-align: center; border-top: 0.5pt solid #a0aec0; padding: 5px 40px; box-sizing: border-box; display: flex; justify-content: space-between; align-items: center;"><span>TIB-SP-TCF-002B</span><span style="flex-grow: 1; text-align: center;">Technical Inspection Bureau (TIB) - PO BOX 25868, Abu Dhabi, UAE TEL+9712 6261737 www.tibuae.com tib@eim.ae</span><span>Page <span class="pageNumber"></span> of <span class="totalPages"></span></span></div>`;
+    
+//     await page.setContent(mainContent, { waitUntil: "networkidle0" });
+
+//     const pdfBuffer = await page.pdf({
+//       format: "A4",
+//       printBackground: true,
+//       displayHeaderFooter: true,
+//       headerTemplate: headerHtml,
+//       footerTemplate: footerHtml,
+//       // Using your exact, preferred PDF margins
+//       margin: { top: "0px", bottom: "0px", left: "10px", right: "10px" },
+//     });
+
+//     console.log("PDF generated successfully.");
+//     res.setHeader("Content-Type", "application/pdf");
+//     res.setHeader("Content-Disposition", `attachment; filename="${templateData.title.replace(/[^a-z0-9]/gi, "_") || "document"}.pdf"`);
+//     res.send(pdfBuffer);
+//   } catch (error) {
+//     console.error("Error during PDF generation:", error);
+//     res.status(500).json({ success: false, message: "PDF generation error", error: error.message });
+//   } finally {
+//     if (browser) await browser.close();
+//   }
+// };
+
+// module.exports = { pdf_generator };
+
+
+// brfore last edit
+
 const puppeteer = require("puppeteer");
 const TemplateModel = require("../model/templateModel");
 const { generateComponentHtml } = require("../utilities/pdfBuilderUtility");
@@ -217,35 +304,37 @@ const pdf_generator = async (req, res) => {
   try {
     const templateId = req.params.id;
     const dynamicData = req.body.data || {};
-    
+
     const templateData = await TemplateModel.findOne({ templateId });
     if (!templateData) {
       return res.status(404).json({ success: false, message: "Template not found" });
     }
 
     const globalStyles = templateData.globalStyles || {};
-    const margins = globalStyles.margins || { top: 20, right: 15, bottom: 15, left: 15 };
-    
+    const contentMargins = globalStyles.margins || { top: 20, right: 15, bottom: 15, left: 15 };
+
     let allPagesHtml = "";
     templateData.pages.forEach((pageData) => {
       let pageComponentsHtml = "";
       pageData.components.forEach((component) => {
         pageComponentsHtml += generateComponentHtml(component, dynamicData);
       });
-      // The page-container has padding to create the visual margin inside the page
-      const pageContainerStyle = `position: relative; width: 210mm; height: 297mm; box-sizing: border-box; padding: ${margins.top}px ${margins.right}px ${margins.bottom}px ${margins.left}px; page-break-after: always;`;
+      // ========= THE FIX IS HERE =========
+      // Add 'background-color: transparent' to prevent the div's white background
+      // from painting over the header on the first page.
+      const pageContainerStyle = `position: relative; width: 210mm; height: 297mm; box-sizing: border-box; padding: ${contentMargins.top}px ${contentMargins.right}px ${contentMargins.bottom}px ${contentMargins.left}px; page-break-after: always; background-color: transparent;`;
       allPagesHtml += `<div class="page-container" style="${pageContainerStyle.trim()}">${pageComponentsHtml}</div>`;
     });
 
-    // We add a base font-size to the body. This is CRITICAL. It ensures that the text renders at a scale
-    // that fits within the fixed heights defined in your JSON, preventing overflow to a second page.
+    // For extra safety, you can also ensure the body has a transparent background.
     const mainContent = `
         <style>
-            body { 
+            html, body { 
                 margin: 0; 
                 padding: 0; 
                 font-family: ${globalStyles.fontFamily || "Arial, sans-serif"}; 
                 font-size: 7.5pt;
+                background-color: transparent !important;
             } 
             .page-container:last-child { page-break-after: avoid; } 
             td p { margin: 0; } 
@@ -255,11 +344,10 @@ const pdf_generator = async (req, res) => {
 
     browser = await puppeteer.launch({ headless: "new", args: ["--no-sandbox", "--disable-setuid-sandbox"] });
     const page = await browser.newPage();
-    
-    // Your requested header and footer templates
+
     const headerHtml = `<div style="width: 100%; font-size: 10px; padding: 15px 40px 0 40px; color: #757575; display: flex; justify-content: space-between; align-items: center; box-sizing: border-box;"><img src="https://fileinfo.com/img/icons/files/256/tib-2240.png" style="height: 30px;" /><img src="https://fileinfo.com/img/icons/files/256/tib-2240.png" style="height: 30px;" /></div>`;
     const footerHtml = `<div style="font-size: 6pt; color: #718096; font-family: Arial, sans-serif; width: 100%; text-align: center; border-top: 0.5pt solid #a0aec0; padding: 5px 40px; box-sizing: border-box; display: flex; justify-content: space-between; align-items: center;"><span>TIB-SP-TCF-002B</span><span style="flex-grow: 1; text-align: center;">Technical Inspection Bureau (TIB) - PO BOX 25868, Abu Dhabi, UAE TEL+9712 6261737 www.tibuae.com tib@eim.ae</span><span>Page <span class="pageNumber"></span> of <span class="totalPages"></span></span></div>`;
-    
+
     await page.setContent(mainContent, { waitUntil: "networkidle0" });
 
     const pdfBuffer = await page.pdf({
@@ -268,13 +356,17 @@ const pdf_generator = async (req, res) => {
       displayHeaderFooter: true,
       headerTemplate: headerHtml,
       footerTemplate: footerHtml,
-      // Using your exact, preferred PDF margins
-      margin: { top: "0px", bottom: "0px", left: "0px", right: "0px" },
+      margin: {
+        top: "60px",
+        bottom: "40px",
+        left: "10px",
+        right: "10px",
+      },
     });
 
     console.log("PDF generated successfully.");
     res.setHeader("Content-Type", "application/pdf");
-    res.setHeader("Content-Disposition", `attachment; filename="${templateData.title.replace(/[^a-z0-9]/gi, "_") || "document"}.pdf"`);
+    res.setHeader("Content-Disposition", `attachment; filename="${templateData.title.replace(/[^a-z0-9]/gi, '_') || "document"}.pdf"`);
     res.send(pdfBuffer);
   } catch (error) {
     console.error("Error during PDF generation:", error);

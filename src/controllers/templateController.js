@@ -169,7 +169,7 @@
 // };
 
 const axios = require('axios');
-const Template = require('../model/templateSecondModal');
+const TemplateModal = require('../model/templateSecondModal');
 
 /**
  * @desc    Fetches all templates from the database.
@@ -179,7 +179,7 @@ const Template = require('../model/templateSecondModal');
 const getAllTemplates = async (req, res) => {
   try {
     // Find all templates without selecting specific fields. This fetches the full documents.
-    const templates = await Template.find({});
+    const templates = await TemplateModal.find({});
     
     // The frontend expects the main ID to be 'id'. We will map over the results
     // to transform the MongoDB documents into plain JavaScript objects that match the frontend's needs.
@@ -206,7 +206,7 @@ const getAllTemplates = async (req, res) => {
  */
 const getTemplateById = async (req, res) => {
   try {
-    const template = await Template.findOne({ templateId: req.params.id });
+    const template = await TemplateModal.findOne({ templateId: req.params.id });
     if (!template) {
       return res.status(404).json({ success: false, message: 'Template not found' });
     }
@@ -233,7 +233,7 @@ const createTemplate = async (req, res) => {
     if (!newTemplateData.id || !newTemplateData.title) {
         return res.status(400).json({ success: false, message: 'Template ID and title are required.' });
     }
-    const templateToSave = new Template({
+    const templateToSave = new TemplateModal({
         templateId: newTemplateData.id,
         title: newTemplateData.title,
         pages: newTemplateData.pages,
@@ -260,7 +260,7 @@ const updateTemplate = async (req, res) => {
   try {
     const templateId = req.params.id;
     const templateUpdates = req.body;
-    const updatedTemplate = await Template.findOneAndUpdate(
+    const updatedTemplate = await TemplateModal.findOneAndUpdate(
         { templateId: templateId },
         templateUpdates,
         { new: true, runValidators: true }
@@ -297,7 +297,7 @@ const syncTemplates = async (req, res) => {
         pages: template.pages,
         globalStyles: template.globalStyles,
       };
-      await Template.findOneAndUpdate(filter, update, { new: true, upsert: true });
+      await TemplateModal.findOneAndUpdate(filter, update, { new: true, upsert: true });
       successCount++;
     });
     await Promise.all(operations);
