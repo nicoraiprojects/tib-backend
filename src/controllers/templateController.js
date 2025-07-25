@@ -170,6 +170,8 @@
 
 const axios = require('axios');
 const Template = require('../model/templateSecondModal');
+const ActiveJobModel = require('../model/activeJobModel');
+const TemplateModel = require('../model/templateSecondModal');
 
 /**
  * @desc    Fetches all templates from the database.
@@ -222,11 +224,28 @@ const getTemplateById = async (req, res) => {
   }
 };
 
-/**
- * @desc    Creates a new template document in the database.
- * @route   POST /api/templates
- * @access  Public
- */
+const getTemplatebyId = async (req, res) => {
+  try {
+    const template = await ActiveJobModel.findOne({ originalTemplateId: req.params.id });
+
+    console.log(template);
+    
+    if (!template) {
+      return res.status(404).json({ success: false, message: 'Template not found' });
+    }
+    const responseObject = template.toObject();
+    responseObject.id = responseObject.originalTemplateId;
+    delete responseObject._id;
+    delete responseObject.originalTemplateId;
+    delete responseObject.__v;
+    res.status(200).json(responseObject);
+  } catch (error) {
+    console.error(`Error fetching template by ID: ${req.params.id}`, error);
+    res.status(500).json({ success: false, message: 'Failed to fetch template.', error: error.message });
+  }
+};
+
+
 const createTemplate = async (req, res) => {
   try {
     const newTemplateData = req.body;
@@ -315,10 +334,107 @@ const syncTemplates = async (req, res) => {
   }
 };
 
+const getTemplateTitles = async (req, res) => {
+  try {
+    const templates = await Template.find({}).select('templateId title');
+ 
+    const formattedTitles = templates.map(t => ({
+      value: t.title,
+      label: t.title,
+    }));
+
+    res.status(200).json(formattedTitles);
+  } catch (error) {
+    console.error('Error fetching template titles:', error);
+    res.status(500).json({ success: false, message: 'Failed to fetch template titles.', error: error.message });
+  }
+};
+
+const startJob = async (req, res) => {
+  const { jobId, orderId, templateId } = req.body;
+
+  
+  if (!jobId || !orderId || !templateId) {
+    return res.status(400).json({
+      success: false,
+      message: 'jobId, orderId, and templateId are required.',
+    });
+  }
+
+  try {
+    const originalTemplate = await TemplateModel.findOne({ templateId: templateId });
+
+    if (!originalTemplate) {
+      return res.status(404).json({ success: false, message: 'Original template not found.' });
+    }
+
+    const existingActiveJob = await ActiveJobModel.findOne({ jobId: jobId });
+    if (existingActiveJob) {
+      return res.status(200).json(existingActiveJob);
+    }
+
+    const newActiveJob = new ActiveJobModel({
+      jobId: jobId,
+      orderId: orderId,
+      originalTemplateId: templateId,
+      templateData: originalTemplate.toObject(),
+    });
+
+    const savedActiveJob = await newActiveJob.save();
+
+    res.status(201).json(savedActiveJob);
+
+  } catch (error) {
+    console.error('Error starting job:', error);
+    res.status(500).json({ success: false, message: 'Failed to start job.', error: error.message });
+  }
+};
+
+/**
+ * @desc    Updates the templateData of an active job.
+ * @route   PUT /api/jobs/active-job/:jobId
+ * @access  Public 
+ */
+const updateActiveJob = async (req, res) => {
+    const { jobId } = req.params;
+    const { templateData } = req.body;
+    
+    if (!templateData) {
+        return res.status(400).json({ success: false, message: 'templateData is required for update.' });
+    }
+
+    try {
+        const updatedJob = await ActiveJobModel.findOneAndUpdate(
+            { jobId: jobId },
+            { $set: { templateData: templateData } },
+            { new: true } 
+        );
+
+        if (!updatedJob) {
+            return res.status(404).json({ success: false, message: 'Active job not found.' });
+        }
+
+        
+        res.status(200).json(updatedJob);
+    } catch (error) {
+        console.error('Error updating active job:', error);
+        res.status(500).json({ success: false, message: 'Failed to update active job.', error: error.message });
+    }
+};
+
+
+
+
+
+
 module.exports = {
   getAllTemplates,
   getTemplateById,
   syncTemplates,
   createTemplate,
   updateTemplate,
+  getTemplateTitles,
+  startJob,
+  updateActiveJob,
+  getTemplatebyId
 };

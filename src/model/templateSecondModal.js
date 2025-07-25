@@ -31,6 +31,6 @@ const templateSchema = new mongoose.Schema(
   }
 );
 
-const TemplateModel = mongoose.model('Template', templateSchema);
+const TemplateModel = mongoose.model('TemplateSecond', templateSchema);
 
 module.exports = TemplateModel;
