@@ -1,3 +1,4 @@
+const ActiveJobModel = require('../model/activeJobModel');
 const Job = require('../model/jobsModel');
 
 const createJob = async (req, res) => {
@@ -91,8 +92,76 @@ const getJobById = async (req, res) => {
     }
 };
 
+
+const duplicateJob = async (req, res) => {
+    const { jobId: originalJobId } = req.params;
+
+    try {
+        const originalJob = await Job.findOne({ jobId: originalJobId }).lean();
+        if (!originalJob) {
+            return res.status(404).json({ success: false, message: 'Original job not found.' });
+        }
+
+        const originalActiveJob = await ActiveJobModel.findOne({ jobId: originalJobId }).lean();
+
+        const newJobId = `JOB-${Date.now().toString().slice(-5)}`;
+
+        const newJob = new Job({
+            ...originalJob,
+            _id: undefined, 
+            jobId: newJobId,
+            status: 'Scheduled',
+            createdAt: new Date(),
+            updatedAt: new Date(),
+        });
+        
+        if (originalActiveJob) {
+            const newActiveJob = new ActiveJobModel({
+                ...originalActiveJob,
+                _id: undefined,
+                jobId: newJobId,
+                createdAt: new Date(),
+                updatedAt: new Date(),
+            });
+            await newActiveJob.save();
+        }
+
+        const savedNewJob = await newJob.save();
+        res.status(201).json(savedNewJob);
+
+    } catch (error) {
+        console.error('Error duplicating job:', error);
+        res.status(500).json({ success: false, message: 'Server error while duplicating job.', error: error.message });
+    }
+};
+
+const deleteJob = async (req, res) => {
+   const { jobId } = req.params;
+
+    try {
+        const jobToDelete = await Job.findOne({ jobId: jobId });
+        if (!jobToDelete) {
+            return res.status(404).json({ success: false, message: 'Job not found.' });
+        }
+        await Job.deleteOne({ jobId: jobId });
+        await ActiveJobModel.deleteOne({ jobId: jobId });
+
+        res.status(200).json({ 
+            success: true, 
+            message: `Job ${jobId} and associated data deleted successfully.` 
+        });
+
+    } catch (error) {
+        console.error('Error deleting job:', error);
+        res.status(500).json({ success: false, message: 'Server error while deleting job.', error: error.message });
+    }
+};
+
+
 module.exports = {
     createJob,
     getJobsByOrderId,
-    getJobById
+    getJobById,
+    duplicateJob,
+    deleteJob
 };
